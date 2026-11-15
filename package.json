@@ -1,0 +1,1 @@
+{"description":"Quản lí chi tiêu gia đình — bản triển khai độc lập (Node.js thuần, không cần npm install)","engines":{"node":">=18"},"main":"server.js","name":"quan-li-chi-tieu-gia-dinh","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
