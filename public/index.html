@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Quản lí chi tiêu gia đình</title>
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand"><span class="brand-icon">🏠</span><span>Quản lí chi tiêu gia đình</span></div>
+  <div id="user-box" class="hidden">
+    <span id="user-label"></span>
+    <button id="btn-logout" class="btn btn-ghost">Đăng xuất</button>
+  </div>
+</header>
+
+<main>
+  <!-- Auth: login / register -->
+  <section id="view-auth" class="card narrow hidden">
+    <div class="auth-tabs">
+      <button id="tab-login" class="auth-tab active" type="button">Đăng nhập</button>
+      <button id="tab-register" class="auth-tab" type="button">Đăng kí tài khoản</button>
+    </div>
+
+    <form id="form-login">
+      <p class="muted">Đăng nhập bằng tài khoản gia đình của bạn. Cùng một tài khoản đăng nhập được trên nhiều máy cùng lúc.</p>
+      <label>Tên đăng nhập<input id="login-username" required autocomplete="username"></label>
+      <label>Mật khẩu<input id="login-password" type="password" required autocomplete="current-password"></label>
+      <p class="error" id="login-error"></p>
+      <button class="btn btn-primary btn-block" type="submit">Đăng nhập</button>
+    </form>
+
+    <form id="form-register" class="hidden">
+      <p class="muted">Mỗi gia đình đăng kí một tài khoản riêng — dữ liệu thu chi của gia đình bạn chỉ gia đình bạn thấy.</p>
+      <label>Tên gia đình<input id="reg-family" required placeholder="Ví dụ: Gia đình Đoàn" autocomplete="organization"></label>
+      <label>Tên đăng nhập<input id="reg-username" required autocomplete="username"></label>
+      <label>Mật khẩu (ít nhất 6 ký tự)<input id="reg-password" type="password" required minlength="6" autocomplete="new-password"></label>
+      <p class="error" id="reg-error"></p>
+      <button class="btn btn-primary btn-block" type="submit">Đăng kí</button>
+    </form>
+  </section>
+
+  <!-- Main app -->
+  <section id="view-app" class="hidden">
+
+    <div class="month-nav">
+      <button id="month-prev" class="btn btn-ghost" aria-label="Tháng trước">‹</button>
+      <h2 id="month-label"></h2>
+      <button id="month-next" class="btn btn-ghost" aria-label="Tháng sau">›</button>
+      <button id="month-today" class="btn btn-small hidden" type="button">Về tháng này</button>
+    </div>
+
+    <div id="summary" class="stats"></div>
+    <div id="deferred-note" class="note-deferred hidden"></div>
+
+    <div class="card">
+      <h3>So sánh các tháng</h3>
+      <div id="bar-chart" class="bar-chart"></div>
+      <div class="legend"><span class="dot dot-in"></span>Thu <span class="dot dot-out"></span>Chi</div>
+    </div>
+
+    <div class="card">
+      <h3>Chi theo danh mục — <span id="donut-month-label"></span></h3>
+      <div class="donut-wrap">
+        <div id="donut-chart"></div>
+        <ul id="donut-legend" class="donut-legend"></ul>
+      </div>
+    </div>
+
+    <button id="btn-add" class="btn btn-primary btn-block">＋ Thêm khoản</button>
+
+    <!-- Entry form -->
+    <section id="entry-sheet" class="card hidden">
+      <h3 id="entry-title">Thêm khoản</h3>
+      <form id="form-entry">
+        <div class="type-toggle">
+          <button type="button" id="type-expense" class="toggle-btn active">Chi</button>
+          <button type="button" id="type-income" class="toggle-btn">Thu</button>
+        </div>
+        <label>Số tiền (¥)<input id="entry-amount" type="number" inputmode="numeric" min="1" required></label>
+        <label>Ngày<input id="entry-date" type="date" required></label>
+
+        <div class="picker-block">
+          <div class="picker-head"><span>Danh mục</span><button type="button" class="btn btn-small" data-manage="category">Quản lí</button></div>
+          <div id="picker-category" class="chips"></div>
+          <div class="manage-panel hidden" data-panel="category"></div>
+        </div>
+
+        <div class="picker-block">
+          <div class="picker-head"><span>Người thu/chi</span><button type="button" class="btn btn-small" data-manage="person">Quản lí</button></div>
+          <div id="picker-person" class="chips"></div>
+          <div class="manage-panel hidden" data-panel="person"></div>
+        </div>
+
+        <div class="picker-block">
+          <div class="picker-head"><span>Cách trả</span><button type="button" class="btn btn-small" data-manage="payment">Quản lí</button></div>
+          <div id="picker-payment" class="chips"></div>
+          <p id="entry-deferred-hint" class="muted hidden">Cách trả này thanh toán vào tháng sau.</p>
+          <div class="manage-panel hidden" data-panel="payment"></div>
+        </div>
+
+        <label>Ghi chú<input id="entry-note" placeholder="Không bắt buộc"></label>
+        <p class="error" id="entry-error"></p>
+        <div class="row-btns">
+          <button class="btn btn-primary" type="submit" id="entry-save">Lưu khoản</button>
+          <button class="btn btn-ghost hidden" type="button" id="entry-delete">Xoá khoản</button>
+          <button class="btn btn-ghost" type="button" id="entry-cancel">Huỷ</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="card">
+      <h3>Các khoản trong tháng</h3>
+      <div id="tx-list"></div>
+    </div>
+
+    <!-- Budgets -->
+    <details class="card section" id="section-budgets">
+      <summary><h3>Hạn mức tháng</h3></summary>
+      <div id="budget-list"></div>
+      <form id="form-budget" class="sub-form">
+        <h4>Đặt hạn mức cho mục khác</h4>
+        <label>Danh mục chi
+          <select id="budget-category"></select>
+        </label>
+        <label>Hạn mức (¥)<input id="budget-amount" type="number" inputmode="numeric" min="1"></label>
+        <label>Cảnh báo khi chi đạt % của hạn mức<input id="budget-threshold" type="number" min="1" max="100" value="80"></label>
+        <p class="error" id="budget-error"></p>
+        <button class="btn btn-primary" type="submit">Lưu hạn mức</button>
+      </form>
+    </details>
+
+    <!-- Recurring -->
+    <details class="card section" id="section-recurring">
+      <summary><h3>Thu chi cố định hàng tháng</h3></summary>
+      <p class="muted">Nhập một lần — app tự ghi vào sổ đúng ngày quyết toán của từng tháng, từ tháng bắt đầu cho đến khi bạn sửa hoặc xoá mục.</p>
+      <div id="recurring-list"></div>
+      <form id="form-recurring" class="sub-form">
+        <h4 id="recurring-form-title">Thêm mục cố định</h4>
+        <label>Tên mục<input id="rec-name" placeholder="Ví dụ: Tiền nhà" required></label>
+        <div class="type-toggle">
+          <button type="button" id="rec-type-expense" class="toggle-btn active">Chi</button>
+          <button type="button" id="rec-type-income" class="toggle-btn">Thu</button>
+        </div>
+        <label>Số tiền (¥)<input id="rec-amount" type="number" inputmode="numeric" min="1" required></label>
+        <label>Ngày quyết toán trong tháng (1–31)<input id="rec-day" type="number" min="1" max="31" required></label>
+        <label>Tháng bắt đầu<input id="rec-start" type="month" required></label>
+        <label>Danh mục<input id="rec-category" list="rec-category-list"><datalist id="rec-category-list"></datalist></label>
+        <label>Người thu/chi<input id="rec-person" list="rec-person-list"><datalist id="rec-person-list"></datalist></label>
+        <label>Cách trả<input id="rec-payment" list="rec-payment-list"><datalist id="rec-payment-list"></datalist></label>
+        <p class="error" id="recurring-error"></p>
+        <div class="row-btns">
+          <button class="btn btn-primary" type="submit">Lưu mục cố định</button>
+          <button class="btn btn-ghost hidden" type="button" id="rec-cancel-edit">Huỷ sửa</button>
+        </div>
+      </form>
+    </details>
+
+    <!-- Payment settlement -->
+    <details class="card section" id="section-settlement">
+      <summary><h3>Thiết lập thanh toán</h3></summary>
+      <p class="muted">Chọn mỗi cách trả là <b>Trả ngay</b> hay <b>Tháng sau</b>. Khoản chi vẫn tính vào tháng nhập, nhưng tiền trả bằng cách “Tháng sau” sẽ được ghi chú để thanh toán vào tháng sau.</p>
+      <div id="settlement-list"></div>
+    </details>
+
+    <!-- Account -->
+    <details class="card section" id="section-account">
+      <summary><h3>Tài khoản</h3></summary>
+      <p id="account-info" class="muted"></p>
+      <form id="form-password" class="sub-form">
+        <h4>Đổi mật khẩu</h4>
+        <label>Mật khẩu hiện tại<input id="pw-current" type="password" autocomplete="current-password" required></label>
+        <label>Mật khẩu mới (ít nhất 6 ký tự)<input id="pw-new" type="password" autocomplete="new-password" required minlength="6"></label>
+        <p class="error" id="pw-error"></p>
+        <p class="ok-msg" id="pw-ok"></p>
+        <button class="btn btn-primary" type="submit">Đổi mật khẩu</button>
+      </form>
+      <button id="btn-logout-2" class="btn btn-ghost" type="button">Đăng xuất khỏi máy này</button>
+    </details>
+
+    <!-- Reset -->
+    <details class="card section danger" id="section-reset">
+      <summary><h3>Reset toàn bộ</h3></summary>
+      <p class="muted">Xoá toàn bộ dữ liệu của <b>gia đình bạn</b> để nhập lại từ đầu. Gia đình khác không bị ảnh hưởng. Hành động này <b>không khôi phục được</b>.</p>
+      <div id="reset-counts" class="muted"></div>
+      <div id="reset-step1">
+        <button id="btn-reset-start" class="btn btn-danger" type="button">Tôi muốn xoá toàn bộ…</button>
+      </div>
+      <div id="reset-step2" class="hidden">
+        <label>Gõ <b>XÓA HẾT</b> để xác nhận<input id="reset-confirm" autocomplete="off"></label>
+        <div class="row-btns">
+          <button id="btn-reset-do" class="btn btn-danger" type="button" disabled>Xoá hết dữ liệu</button>
+          <button id="btn-reset-cancel" class="btn btn-ghost" type="button">Huỷ</button>
+        </div>
+      </div>
+      <p class="ok-msg" id="reset-ok"></p>
+    </details>
+
+  </section>
+</main>
+
+<script src="/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>
